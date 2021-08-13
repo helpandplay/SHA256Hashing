@@ -1,55 +1,51 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Security.Cryptography;
 
-namespace SHA256
-{
-  using System;
-  using System.Security.Cryptography;
+namespace Library {
 
-  namespace PenguinExpress.config
+  public static class SHA256Hash
   {
-    public static class SHA256
+    private int minSaltLen = 12;
+    private int maxSaltLen = 36;
+    private static byte[] Salting(string src, string salt)
     {
-      private const int minSaltLen = 12;
-      private const int maxSaltLen = 36;
-      private static string customSalt = string.Empty;
-      private static string getSalt()
-      {
-        RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-        Random random = new Random();
-        int randomNum = random.Next(minSaltLen, maxSaltLen);
+      byte[] convertSrc = Encoding.ASCII.GetBytes(src);
+      byte[] msg = Encoding.ASCII.GetBytes(salt);
+      byte[] combined = msg.Concat(convertSrc).ToArray();
 
-        byte[] bytes = new byte[randomNum];
-        rng.GetBytes(bytes);
+      return combined;
+    }
+    private static string ByteToString(byte[] data)
+    {
+      StringBuilder stringBuilder = new StringBuilder();
+      foreach (byte b in data)
+        stringBuilder.AppendFormat("{0:x2}", b); //16진수로 변환
 
-        string salt = Convert.ToBase64String(bytes);
-        return salt;
-      }
-      public static void setSalt(string salt)
-      {
-        if (salt.Length < minSaltLen || salt.Length > maxSaltLen)
-        {
-          throw new Exception("salt의 길이를 확인하세요.");
-        }
-        SHA256.customSalt = salt;
-      }
-      public static string Hashing(string pwd)
-      {
-        string salt = string.Empty;
-        if (customSalt == string.Empty) salt = getSalt();
-        else customSalt = salt;
+      return stringBuilder.ToString();
+    }
+    public static string GetSalt()
+    {
+      RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+      Random random = new Random();
+      int randomNum = random.Next(minSaltLen, maxSaltLen);
 
+      byte[] bytes = new byte[randomNum];
+      rng.GetNonZeroBytes(bytes);
 
-      }
-      public static bool isEqualPwd(string input, string dbPwd, string salt)
-      {
-        Hashing();
-      }
+      return ByteToString(bytes);
+    }
+    public static string HashingSHA256(string src, string salt)
+    {
+      byte[] combined = Salting(src, salt);
+      byte[] hash = new SHA256CryptoServiceProvider().ComputeHash(combined);
 
+      return ByteToString(hash);
+    }
+    public static bool Compare(string src, string salt, string target)
+    {
+      return HashingSHA256(src, salt) == target;
     }
   }
-
 }
