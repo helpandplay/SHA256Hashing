@@ -7,8 +7,8 @@ namespace Library {
 
   public static class SHA256Hash
   {
-    private int minSaltLen = 12;
-    private int maxSaltLen = 36;
+    private const int minSaltLen = 12;
+    private const int maxSaltLen = 36;
     private static byte[] Salting(string src, string salt)
     {
       byte[] convertSrc = Encoding.ASCII.GetBytes(src);
